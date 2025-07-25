@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
+import getters
 import menu_constants
 
 
@@ -65,7 +66,7 @@ def handle_main_menu(update, context, param=None):
             reply_markup=build_keyboard('main_menu', menu_constants.MAIN_MENU)
         )
 
-# ниже пока заглушки
+# заглушка
 def handle_start_reservation(update, context):
     query = update.callback_query
     query.answer()
@@ -74,6 +75,7 @@ def handle_start_reservation(update, context):
         reply_markup=back_to_menu()
     )
 
+# TODO: основная часть бота - бронирование ячейки
 
 def handle_storage_rules(update, context):
     query = update.callback_query
@@ -85,7 +87,7 @@ def handle_show_my_storages(update, context):
     query = update.callback_query
     query.answer()
     query.edit_message_text(
-        text="Здесь будут забронированные ячейки",
+        text=getters.get_my_storages(),
         reply_markup=back_to_menu()
     )
 
@@ -93,12 +95,21 @@ def handle_show_my_storages(update, context):
 def handle_take_my_stuff(update, context):
     query = update.callback_query
     query.answer()
-    query.edit_message_text(
-        text="Здесь будет QR-код для разблокировки ячейки",
+
+    query.delete_message()
+
+    context.bot.send_photo(
+        chat_id=update.effective_chat.id,
+        photo="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=SelfStorageAccess",
+        caption=(
+            "📲 Вы можете забрать свои вещи, отсканировав этот QR-код на нашем складе.\n\n"
+            "Этот QR-код можно использовать и в будущем — чтобы вернуть вещи в ячейку "
+            "или взять что-то нужное снова!"
+        ),
         reply_markup=back_to_menu()
     )
 
-
+# заглушка
 def handle_legal_services(update, context):
     query = update.callback_query
     query.answer()
@@ -106,3 +117,5 @@ def handle_legal_services(update, context):
         text="Здесь будут услуги для юридических лиц",
         reply_markup=back_to_menu()
     )
+
+# TODO: сценарий для юридических лиц
