@@ -1,37 +1,32 @@
 import os
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
+import handlers
+
+from dotenv import load_dotenv
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
-import handlers
 from menu_constants import MAIN_MENU
 
 
 HANDLER_MAP = {
-    'to_menu': bot_utils.handle_back_to_menu,
-    'main_menu': bot_utils.handle_main_menu,
-    'show_storage_rules': bot_utils.handle_show_storage_rules,
-    'order_storage': bot_utils.handle_order_storage,
-    'retrieve_items': bot_utils.handle_retrieve_items,
+    'agreement_accepted': handlers.handle_agreement_accepted,
+    'to_menu': handlers.handle_back_to_menu,
+    'main_menu': handlers.handle_main_menu,
+    'show_storage_rules': handlers.handle_show_storage_rules,
+    'retrieve_items': handlers.handle_retrieve_items,
 }
 
+
 def start(update, context):
-    update.message.reply_text(
-        '''SelfStorage поможет вам сохранить то, что не умещается дома!
-        🧥 Зимние вещи, когда на дворе лето
-        🛷 Сноуборд, шины, велосипеды
-        📦 Вещи на время переезда
-        👶 Детские вещи «на потом»
-        🗄 Документы и архивы (для бизнеса)
-        🧳 Всё, что жалко выбросить, но негде держать
-        Выберите нужный вам пункт меню:''',
-        reply_markup=bot_utils.build_keyboard('main_menu', MAIN_MENU)
-    )
+    """Обработчик /start с запросом согласия обработки пд"""
+    handlers.show_agreement_request(update)
+
 
 def button_handler(update, context):
+    """Обработчик нажатий кнопок"""
     query = update.callback_query
     query.answer()
     data = query.data.strip()
-    
+
     handler = HANDLER_MAP.get(data)
     if handler:
         handler(update, context)  # Передаем только update и context
@@ -40,13 +35,17 @@ def button_handler(update, context):
 
 
 def main():
-    tg_token = '7988710995:AAHQXwvQbWwkIlqmYcu0EKsWVao_wAHgM6M'
+    load_dotenv()
+    tg_token = os.getenv("TG_TOKEN")
+
     updater = Updater(tg_token, use_context=True)
     dp = updater.dispatcher
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CallbackQueryHandler(button_handler))
+
     updater.start_polling()
     updater.idle()
+
 
 if __name__ == '__main__':
     main()
