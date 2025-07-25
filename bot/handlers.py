@@ -57,6 +57,8 @@ def handle_main_menu(update, context, param=None):
         handle_show_my_storages(update, context)
     elif param == '3':
         handle_take_my_stuff(update, context)
+    elif param == '4':
+        handle_legal_services(update, context)
     else:
         query.edit_message_text(
             text="Что вас интересует?",
@@ -96,5 +98,14 @@ def handle_take_my_stuff(update, context):
     query.answer()
     query.edit_message_text(
         text="Здесь будет QR-код для разблокировки ячейки",
+        reply_markup=back_to_menu()
+    )
+
+
+def handle_legal_services(update, context):
+    query = update.callback_query
+    query.answer()
+    query.edit_message_text(
+        text="Здесь будут услуги для юридических лиц",
         reply_markup=back_to_menu()
     )
