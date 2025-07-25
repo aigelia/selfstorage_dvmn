@@ -78,10 +78,7 @@ def handle_start_reservation(update, context):
 def handle_storage_rules(update, context):
     query = update.callback_query
     query.answer()
-    query.edit_message_text(
-        text="Здесь будут правила хранения",
-        reply_markup=back_to_menu()
-    )
+    query.edit_message_text(text=menu_constants.STORAGE_RULES, reply_markup=back_to_menu())
 
 
 def handle_show_my_storages(update, context):
