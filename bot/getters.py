@@ -1,3 +1,10 @@
+import os
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'selfstorage.settings')
+
+import django
+django.setup()
+
 from selfstorage_db.models import Client
 from django.utils import timezone
 

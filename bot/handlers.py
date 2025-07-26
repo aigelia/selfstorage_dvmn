@@ -71,10 +71,43 @@ def handle_start_reservation(update, context):
     query = update.callback_query
     query.answer()
     query.edit_message_text(
-        text="✍️ Как вас зовут? (Здесь будет сценарий бронирования ячейки)",
+        text="✍️ Как вас зовут?",
         reply_markup=back_to_menu()
     )
+    context.user_data['current_step'] = 'ask_name'
 
+
+def handle_ask_name(update, context):
+    user_data = context.user_data
+    user_name = update.message.text.strip()
+
+    user_data['name'] = user_name
+    user_data['current_step'] = 'choose_warehouse'
+
+    update.message.reply_text(
+        f"🏢 Выберите удобный склад:",
+        reply_markup=build_keyboard('choose_warehous', menu_constants.WAREHOUSES)
+    )
+
+
+def handle_choose_warehouse(update, context):
+    query = update.callback_query
+    query.answer()
+    query.edit_message_text(
+        text='Вам нужна помощь с доставкой вещей до склада?',
+        reply_markup=build_keyboard('delivery_type', menu_constants.DELIVERY_TYPE)
+    )
+
+
+def handle_delivery_type(update, context, param=None):
+    query = update.callback_query
+    query.answer()
+
+    if param == '0':
+        query.edit_message_text(
+            text="Укажите адрес, откуда забрать вещи",
+            reply_markup=back_to_menu()
+        )
 # TODO: основная часть бота - бронирование ячейки
 
 def handle_storage_rules(update, context):
