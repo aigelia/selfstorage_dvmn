@@ -12,6 +12,8 @@ HANDLER_MAP = {
     'main_menu': handlers.handle_main_menu,
     'ask_name': handlers.handle_ask_name,
     'choose_warehouse': handlers.handle_choose_warehouse,
+    'delivery_type': handlers.handle_delivery_type,
+    'specify_rental_start_date': handlers.handle_specify_rental_start_date,
 }
 
 
@@ -28,6 +30,8 @@ def start(update, context):
         'Чтобы продолжить, нам необходимо ваше согласие на обработку персональных данных в соответствии с политикой (ЗДЕСЬ БУДЕТ ССЫЛКА) SelfStorage\n',
         reply_markup=handlers.build_keyboard('agreement', AGREEMENT)
     )
+
+    # TODO ссылка на согласие
 
 
 def button_handler(update, context):

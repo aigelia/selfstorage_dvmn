@@ -66,8 +66,8 @@ def handle_main_menu(update, context, param=None):
             reply_markup=build_keyboard('main_menu', menu_constants.MAIN_MENU)
         )
 
-# заглушка
-def handle_start_reservation(update, context):
+
+def handle_start_reservation(update, context, param=None):
     query = update.callback_query
     query.answer()
     query.edit_message_text(
@@ -77,38 +77,89 @@ def handle_start_reservation(update, context):
     context.user_data['current_step'] = 'ask_name'
 
 
-def handle_ask_name(update, context):
+def handle_ask_name(update, context, param=None):
     user_data = context.user_data
     user_name = update.message.text.strip()
 
     user_data['name'] = user_name
-    user_data['current_step'] = 'choose_warehouse'
 
     update.message.reply_text(
         f"🏢 Выберите удобный склад:",
         reply_markup=build_keyboard('choose_warehous', menu_constants.WAREHOUSES)
     )
 
+    user_data['current_step'] = 'choose_warehouse'
 
-def handle_choose_warehouse(update, context):
+
+def handle_choose_warehouse(update, context, param=None):
     query = update.callback_query
     query.answer()
+
+    context.user_data['warehouse'] = menu_constants.WAREHOUSES[int(param)]
+
     query.edit_message_text(
         text='Вам нужна помощь с доставкой вещей до склада?',
         reply_markup=build_keyboard('delivery_type', menu_constants.DELIVERY_TYPE)
     )
+
+    context.user_data['current_step'] = 'delivery_type'
 
 
 def handle_delivery_type(update, context, param=None):
     query = update.callback_query
     query.answer()
 
+    context.user_data['delivery_type'] = menu_constants.DELIVERY_TYPE[int(param)]
+
     if param == '0':
         query.edit_message_text(
-            text="Укажите адрес, откуда забрать вещи",
+            text="С какой даты вы планируете начать аренду?",
+            # TODO даты на ближайшую неделю из бд reply_markup=...
+        )
+
+        context.user_data['current_step'] = 'specify_rental_start_date'
+    else:
+        query.edit_message_text(
+            text="Укажите адрес, откуда забрать вещи:",
             reply_markup=back_to_menu()
         )
-# TODO: основная часть бота - бронирование ячейки
+
+        context.user_data['current_step'] = 'specify_address'
+
+
+# Продолжить отсюда!!!
+
+
+def handle_specify_address(update, context, param=None):
+    pass
+
+
+def handle_specify_phone_number(update, context, param=None):
+    pass
+
+
+def handle_courier_meeting_date(update, context, param=None):
+    pass
+
+
+def handle_specify_rental_start_date(update, context, param=None):
+    pass
+
+
+def handle_cell_size(update, context, param=None):
+    pass
+
+
+def handle_period_of_storage(update, context, param=None):
+    pass
+
+
+def handle_show_storage_info(update, context, param=None):
+    pass
+
+
+# Конец тут !!!
+
 
 def handle_storage_rules(update, context):
     query = update.callback_query
@@ -123,6 +174,8 @@ def handle_show_my_storages(update, context):
         text=getters.get_my_storages(),
         reply_markup=back_to_menu()
     )
+
+    # TODO проверить корректность ответа
 
 
 def handle_take_my_stuff(update, context):
@@ -142,7 +195,7 @@ def handle_take_my_stuff(update, context):
         reply_markup=back_to_menu()
     )
 
-# заглушка
+
 def handle_legal_services(update, context):
     query = update.callback_query
     query.answer()
@@ -150,5 +203,7 @@ def handle_legal_services(update, context):
         text="Здесь будут услуги для юридических лиц",
         reply_markup=back_to_menu()
     )
+    # TODO: создать и проработать сценарий для юридических лиц
 
-# TODO: сценарий для юридических лиц
+
+# TODO подтянуть все возможное из БД
