@@ -67,34 +67,43 @@ def handle_main_menu(update, context, param=None):
         )
 
 
-def handle_start_reservation(update, context, param=None):
+def handle_start_reservation(update, context):
+    """Начало бронирования - запрашиваем имя"""
     query = update.callback_query
     query.answer()
+    context.user_data['user_id'] = update.effective_user.id
+    getters.create_or_update_client(user_id=update.effective_user.id)
+
     query.edit_message_text(
         text="✍️ Как вас зовут?"
     )
     context.user_data['current_step'] = 'ask_name'
 
 
-def handle_ask_name(update, context, param=None):
+def handle_ask_name(update, context):
     user_data = context.user_data
     user_name = update.message.text.strip()
 
-    user_data['name'] = user_name
-
-    update.message.reply_text(
-        f"🏢 Выберите удобный склад:",
-        reply_markup=build_keyboard('choose_warehouse', menu_constants.WAREHOUSES)
+    user_data['full_name'] = user_name
+    user_id = update.effective_user.id
+    getters.create_or_update_client(
+        user_id=user_id,
+        full_name=user_name
     )
 
-    user_data['current_step'] = 'choose_warehouse'
+
+    update.message.reply_text(
+        "🏢 Выберите удобный склад:",
+        reply_markup=build_keyboard('choose_warehouse', getters.get_warehouses())
+    )
+    context.user_data['current_step'] = 'choose_warehouse'
 
 
 def handle_choose_warehouse(update, context, param=None):
     query = update.callback_query
     query.answer()
 
-    context.user_data['warehouse'] = menu_constants.WAREHOUSES[int(param)]
+    context.user_data['warehouse'] = getters.get_warehouses()[int(param)][0]
 
     query.edit_message_text(
         text='Вам нужна помощь с доставкой вещей до склада?',
@@ -134,6 +143,11 @@ def handle_specify_address(update, context, param=None):
     user_data['address'] = user_address
     user_data['using_courier'] = True
 
+    getters.create_or_update_client(
+        user_id=context.user_data['user_id'],
+        address=user_address
+    )
+
     update.message.reply_text(
         f"📞 Ваш номер телефона для связи с курьером:",
         reply_markup=back_to_menu()
@@ -147,6 +161,11 @@ def handle_specify_phone_number(update, context, param=None):
     user_phone_number = update.message.text.strip()
 
     user_data['phone_number'] = user_phone_number
+
+    getters.create_or_update_client(
+        user_id=context.user_data['user_id'],
+        phone_number=user_phone_number
+    )
 
     update.message.reply_text(
         f"📅 Когда удобно встретить доставщика?",
@@ -263,8 +282,9 @@ def handle_storage_rules(update, context):
 def handle_show_my_storages(update, context):
     query = update.callback_query
     query.answer()
+    user_id = update.effective_user.id
     query.edit_message_text(
-        text=getters.get_my_storages(),
+        text=getters.get_my_storages(user_id=user_id),
         reply_markup=back_to_menu()
     )
 
