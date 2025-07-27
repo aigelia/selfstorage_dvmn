@@ -14,6 +14,11 @@ HANDLER_MAP = {
     'choose_warehouse': handlers.handle_choose_warehouse,
     'delivery_type': handlers.handle_delivery_type,
     'specify_rental_start_date': handlers.handle_specify_rental_start_date,
+    'specify_address': handlers.handle_specify_address,
+    'specify_phone_number': handlers.handle_specify_phone_number,
+    'cell_size': handlers.handle_cell_size,
+    'period_of_storage': handlers.handle_period_of_storage,
+    'show_storage_info': handlers.handle_show_storage_info,
 }
 
 

@@ -110,6 +110,7 @@ def handle_delivery_type(update, context, param=None):
     query.answer()
 
     context.user_data['delivery_type'] = menu_constants.DELIVERY_TYPE[int(param)]
+    context.user_data['using_courier'] = False
 
     if param == '0':
         query.edit_message_text(
@@ -120,45 +121,129 @@ def handle_delivery_type(update, context, param=None):
         context.user_data['current_step'] = 'specify_rental_start_date'
     else:
         query.edit_message_text(
-            text="Укажите адрес, откуда забрать вещи:",
+            text="🏠 Укажите адрес, откуда забрать вещи:",
             reply_markup=back_to_menu()
         )
 
         context.user_data['current_step'] = 'specify_address'
 
 
-# Продолжить отсюда!!!
-
-
 def handle_specify_address(update, context, param=None):
-    pass
+    user_data = context.user_data
+    user_address = update.message.text.strip()
+
+    user_data['address'] = user_address
+    user_data['using_courier'] = True
+
+    update.message.reply_text(
+        f"📞 Ваш номер телефона для связи с курьером:",
+        reply_markup=back_to_menu()
+    )
+
+    user_data['current_step'] = 'specify_phone_number'
 
 
 def handle_specify_phone_number(update, context, param=None):
-    pass
+    user_data = context.user_data
+    user_phone_number = update.message.text.strip()
 
+    user_data['phone_number'] = user_phone_number
 
-def handle_courier_meeting_date(update, context, param=None):
-    pass
+    update.message.reply_text(
+        f"📅 Когда удобно встретить доставщика?",
+        # TODO даты на ближайшую неделю из бд reply_markup=...
+    )
+
+    user_data['current_step'] = 'specify_rental_start_date'
 
 
 def handle_specify_rental_start_date(update, context, param=None):
-    pass
+    query = update.callback_query
+    query.answer()
+
+    # TODO подтягиваем дату из БД, заносим в контекст context.user_data['rental_start_date'] = ...
+
+    query.edit_message_text(
+        text="Какого размера ячейка вам понадобится?",
+        reply_markup=build_keyboard('cell_size', menu_constants.CELLS) # TODO вытащить из бд
+    )
+
+    context.user_data['current_step'] = 'cell_size'
 
 
 def handle_cell_size(update, context, param=None):
-    pass
+    query = update.callback_query
+    query.answer()
+
+    context.user_data['cell_size'] = menu_constants.CELLS[int(param)][0]
+
+    query.edit_message_text(
+        text="Какой срок хранения вас интересует?",
+        reply_markup=build_keyboard('period_of_storage', menu_constants.STORAGE_PERIODS)
+    )
+
+    context.user_data['current_step'] = 'period_of_storage'
 
 
 def handle_period_of_storage(update, context, param=None):
-    pass
+    query = update.callback_query
+    query.answer()
+
+
+    # TODO сделать нормальную функцию расчета даты
+    context.user_data['period_of_storage'] = (
+            context.user_data['rental_start_date'] - menu_constants.STORAGE_PERIODS[int(param)]
+    )
+
+    # TODO внести все из базы данных
+    if context.user_data['using_courier']:
+        query.edit_message_text(
+            text=(
+                "🧾 Почти все готово! Вот что вы выбрали:\n"
+                f"Имя: {}\n"
+                f"Склад: {}\n"
+                f"Адрес забора: {}\n"
+                f"Телефон: {}\n"
+                f"Размер: {}\n"
+                f"Срок хранения: {}\n\n"
+                f"Стоимость хранения по вашему заказу составит {...} рублей. Прежде чем продолжить, пожалуйста,"
+                f" ознакомьтесь с правилами [ССЫЛКА НА PDF] хранения и списком разрешенных и запрещенных вещей,"
+                f" а также с политикой обработки персональных данных [ССЫЛКА НА PDF]."
+        ), reply_markup=build_keyboard('show_storage_info', menu_constants.AGREEMENT_TO_ORDER)
+        )
+
+        context.user_data['current_step'] = 'show_storage_info'
+    else:
+        query.edit_message_text(
+            text=(
+                "🧾 Почти все готово! Вот что вы выбрали:\n"
+                f"Имя: {}\n"
+                f"Склад: {}\n"
+                f"Размер: {}\n"
+                f"Срок хранения: {}\n\n"
+                f"Стоимость хранения по вашему заказу составит {...} рублей. Прежде чем продолжить, пожалуйста,"
+                f" ознакомьтесь с правилами [ССЫЛКА НА PDF] хранения и списком разрешенных и запрещенных вещей,"
+                f" а также с политикой обработки персональных данных [ССЫЛКА НА PDF]."
+            ), reply_markup=build_keyboard('show_storage_info', menu_constants.AGREEMENT_TO_ORDER)
+        )
+
+        context.user_data['current_step'] = 'show_storage_info'
 
 
 def handle_show_storage_info(update, context, param=None):
-    pass
+    query = update.callback_query
+    query.answer()
 
-
-# Конец тут !!!
+    if param == '0':
+        query.edit_message_text(
+            text='Ваш заказ успешно создан!',
+            reply_markup=back_to_menu()
+        )
+    else:
+        query.edit_message_text(
+            text='Ваш заказ успешно отменен!',
+            reply_markup=back_to_menu()
+        )
 
 
 def handle_storage_rules(update, context):
