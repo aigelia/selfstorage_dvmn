@@ -6,8 +6,8 @@ from datetime import time
 
 
 class Client(models.Model):
-    user_id = models.IntegerField(verbose_name="id телеграмм")
-    full_name = models.CharField("ФИО", max_length=100)
+    user_id = models.IntegerField(verbose_name="id")
+    full_name = models.CharField("ФИО", max_length=100, null=True, blank=True)
     phone_number = models.CharField(
         "номер телефона",
         max_length=10,
