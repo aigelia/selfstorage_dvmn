@@ -71,8 +71,7 @@ def handle_start_reservation(update, context, param=None):
     query = update.callback_query
     query.answer()
     query.edit_message_text(
-        text="✍️ Как вас зовут?",
-        reply_markup=back_to_menu()
+        text="✍️ Как вас зовут?"
     )
     context.user_data['current_step'] = 'ask_name'
 
@@ -85,7 +84,7 @@ def handle_ask_name(update, context, param=None):
 
     update.message.reply_text(
         f"🏢 Выберите удобный склад:",
-        reply_markup=build_keyboard('choose_warehous', menu_constants.WAREHOUSES)
+        reply_markup=build_keyboard('choose_warehouse', menu_constants.WAREHOUSES)
     )
 
     user_data['current_step'] = 'choose_warehouse'
@@ -158,15 +157,24 @@ def handle_specify_phone_number(update, context, param=None):
 
 
 def handle_specify_rental_start_date(update, context, param=None):
+    user_data = context.user_data
     query = update.callback_query
     query.answer()
 
     # TODO подтягиваем дату из БД, заносим в контекст context.user_data['rental_start_date'] = ...
 
-    query.edit_message_text(
-        text="Какого размера ячейка вам понадобится?",
-        reply_markup=build_keyboard('cell_size', menu_constants.CELLS) # TODO вытащить из бд
-    )
+    if user_data['is_legal']:
+        user_data['is_legal'] = False
+        query.edit_message_text(
+            text="Сколько стеллажей вам понадобится?",
+            reply_markup=build_keyboard('cell_size', menu_constants.RACKS)  # TODO вытащить из бд
+        )
+
+    else:
+        query.edit_message_text(
+            text="Какого размера ячейка вам понадобится?",
+            reply_markup=build_keyboard('cell_size', menu_constants.CELLS) # TODO вытащить из бд
+        )
 
     context.user_data['current_step'] = 'cell_size'
 
@@ -284,10 +292,36 @@ def handle_take_my_stuff(update, context):
 def handle_legal_services(update, context):
     query = update.callback_query
     query.answer()
+    keyboard = [
+        [
+            InlineKeyboardButton("Продолжить", callback_data="continue_legal_service"),
+            InlineKeyboardButton("Вернуться в главное меню", callback_data="to_menu")
+        ]
+    ]
     query.edit_message_text(
-        text="Здесь будут услуги для юридических лиц",
-        reply_markup=back_to_menu()
+        text=(
+            "📦 SelfStorage предоставляет услуги по хранению документов для юридических лиц.\n"
+            "Стоимость аренды одного стеллажа составляет 899 рублей в месяц.\n"
+            "Вы бы хотели приобрести эту услугу?"
+        ),
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
+
+
+def handle_continue_legal_services(update, context, param=None):
+    query = update.callback_query
+    query.answer()
+
+    query = update.callback_query
+    query.answer()
+    query.edit_message_text(
+        text="✍️ Как вас зовут?"
+    )
+    context.user_data['current_step'] = 'ask_name'
+
+    user_data = context.user_data
+    user_data['is_legal'] = True
+
     # TODO: создать и проработать сценарий для юридических лиц
 
 

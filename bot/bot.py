@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
 
 import handlers
-from menu_constants import AGREEMENT, MAIN_MENU
+from menu_constants import AGREEMENT
 
 HANDLER_MAP = {
     'agreement': handlers.handle_agreement,
@@ -19,6 +19,7 @@ HANDLER_MAP = {
     'cell_size': handlers.handle_cell_size,
     'period_of_storage': handlers.handle_period_of_storage,
     'show_storage_info': handlers.handle_show_storage_info,
+    'continue_legal_service': handlers.handle_continue_legal_services,
 }
 
 
