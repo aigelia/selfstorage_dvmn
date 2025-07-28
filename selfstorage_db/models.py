@@ -1,28 +1,29 @@
 from django.db import models
-
 from datetime import time
-
-# Create your models here.
 
 
 class Client(models.Model):
-    user_id = models.IntegerField(verbose_name="id")
+    user_id = models.IntegerField(verbose_name="id", unique=True)
     full_name = models.CharField("ФИО", max_length=100, null=True, blank=True)
     phone_number = models.CharField(
-        "номер телефона",
-        max_length=10,
+        "Номер телефона",
+        max_length=20,
         blank=True,
         null=True
     )
     address = models.CharField(
-        max_length=100,
+        "Адрес",
+        max_length=200,
         blank=True,
-        null=True,
-        verbose_name="адрес"
+        null=True
+    )
+    is_legal = models.BooleanField(
+        "Юридическое лицо",
+        default=False
     )
 
     def __str__(self):
-        return f"{self.user_id}, ({self.full_name})"
+        return f"{self.user_id} ({self.full_name or 'Без имени'})"
 
     class Meta:
         verbose_name = "Клиент"
@@ -30,53 +31,69 @@ class Client(models.Model):
 
 
 class Warehouse(models.Model):
-    name = models.CharField(max_length=100, verbose_name="название склада")
-    address = models.CharField(max_length=100, verbose_name="адрес")
-    open_time = models.TimeField("open_time", default=time(7, 0))
-    close_time = models.TimeField("close_time", default=time(19, 0))
-    total_boxes_size_s = models.PositiveIntegerField(verbose_name="боксы размера S", default=0)
-    total_boxes_size_m = models.PositiveIntegerField(verbose_name="боксы размера M", default=0)
-    total_boxes_size_l = models.PositiveIntegerField(verbose_name="боксы размера L", default=0)
-    available_boxes_s = models.PositiveIntegerField(verbose_name="доступные боксы S", default=0)
-    available_boxes_m = models.PositiveIntegerField(verbose_name="доступные боксы M", default=0)
-    available_boxes_l = models.PositiveIntegerField(verbose_name="доступные боксы L", default=0)
+    name = models.CharField("Название склада", max_length=100)
+    address = models.CharField("Адрес", max_length=200)
+    open_time = models.TimeField("Время открытия", default=time(9, 0))
+    close_time = models.TimeField("Время закрытия", default=time(18, 0))
+
+    # физ лицо
+    total_boxes = models.PositiveIntegerField("Общее количество ячеек", default=0)
+    available_boxes = models.PositiveIntegerField("Доступные ячейки", default=0)
+
+    # юр лицо
+    total_racks = models.PositiveIntegerField("Количество стеллажей", default=0)
+    available_racks = models.PositiveIntegerField("Доступные стеллажи", default=0)
+
+    def __str__(self):
+        return f"{self.name} ({self.address})"
 
     class Meta:
         verbose_name = "Склад"
         verbose_name_plural = "Склады"
 
 
-class Box(models.Model):
-    sizes = [
-        ("S", "1 м3"),
-        ("M", "5 м3"),
-        ("L", "10 м3")
+class StorageUnit(models.Model):
+    SIZE_CHOICES = [
+        ("S", "Малый (1 м³)"),
+        ("M", "Средний (5 м³)"),
+        ("L", "Большой (10 м³)"),
+        ("XL", "Очень большой (15 м³)"),
+        ("RACK", "Стеллаж для документов")
     ]
+
+    warehouse = models.ForeignKey(
+        Warehouse,
+        on_delete=models.CASCADE,
+        related_name="storage_units",
+        verbose_name="Склад"
+    )
+    unit_number = models.CharField("Номер единицы", max_length=20)
+    size = models.CharField(
+        "Тип/размер",
+        max_length=5,
+        choices=SIZE_CHOICES
+    )
+    price = models.DecimalField(
+        "Цена в месяц",
+        max_digits=10,
+        decimal_places=2
+    )
+    is_available = models.BooleanField("Доступен", default=True)
+    start_rent_date = models.DateField("Начало аренды", null=True, blank=True)
+    end_rent_date = models.DateField("Окончание аренды", null=True, blank=True)
     client = models.ForeignKey(
         Client,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="boxes",
-        verbose_name="клиент"
+        related_name="rented_units",
+        verbose_name="Арендатор"
     )
-    warehouse = models.ForeignKey(
-        Warehouse,
-        on_delete=models.CASCADE,
-        related_name="boxes",
-        verbose_name="склад"
-    )
-    num = models.CharField(max_length=10, verbose_name="номер бокса")
-    size = models.CharField(max_length=2, choices=sizes, verbose_name="размер бокса")
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="цена аренды в месяц")
-    is_available = models.BooleanField(default=True, verbose_name="доступен для аренды")
-    start_rent_date = models.DateTimeField(null=True, blank=True, verbose_name="начало аренды")
-    end_rent_date = models.DateTimeField(null=True, blank=True, verbose_name="конец аренды")
 
     def __str__(self):
-        return f"Бокс №{self.num} {self.get_size_display()}\
-            {self.warehouse.name} - {self.warehouse.address}"
+        return f"{self.get_size_display()} №{self.unit_number} ({'Свободен' if self.is_available else 'Занят'})"
 
     class Meta:
-        verbose_name = "Бокс"
-        verbose_name_plural = "Боксы"
+        verbose_name = "Единица хранения"
+        verbose_name_plural = "Единицы хранения"
+        unique_together = ('warehouse', 'unit_number')
