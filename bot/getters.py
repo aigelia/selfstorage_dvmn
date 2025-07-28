@@ -11,13 +11,18 @@ from django.utils import timezone
 
 def create_or_update_client(user_id, full_name=None, phone_number=None, address=None):
     """Создает или обновляет клиента в базе данных"""
+    defaults = {}
+
+    if full_name is not None:
+        defaults['full_name'] = full_name
+    if phone_number is not None:
+        defaults['phone_number'] = phone_number
+    if address is not None:
+        defaults['address'] = address
+
     client, created = Client.objects.update_or_create(
         user_id=user_id,
-        defaults={
-            'full_name': full_name,
-            'phone_number': phone_number,
-            'address': address
-        }
+        defaults=defaults
     )
     return client
 
