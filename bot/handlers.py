@@ -74,14 +74,20 @@ def handle_start_reservation(update, context):
     """Начало бронирования - запрашиваем имя"""
     query = update.callback_query
     query.answer()
-    context.user_data['user_id'] = update.effective_user.id
-    getters.create_or_update_client(user_id=update.effective_user.id)
+    
+    user_id = update.effective_user.id
+    context.user_data['user_id'] = user_id
+    context.user_data['is_legal'] = False  
+
+    getters.create_or_update_client(
+        user_id=user_id,
+        is_legal=False  
+    )
 
     query.edit_message_text(
         text="✍️ Как вас зовут?"
     )
     context.user_data['current_step'] = 'ask_name'
-    context.user_data['is_legal'] = False
 
 
 def handle_ask_name(update, context):
